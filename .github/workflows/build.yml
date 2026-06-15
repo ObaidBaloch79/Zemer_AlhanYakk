@@ -1,0 +1,32 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Download MP3s
+        run: |
+          mkdir -p app/src/main/res/raw
+          cd app/src/main/res/raw
+          BASE="https://github.com/ObaidBaloch79/Zemer_AlhanYakk/releases/download/songs"
+          for i in 1 2 3 4 5 6 7 8; do
+            curl -L "${BASE}/song${i}.mp3" -o "song${i}.mp3"
+          done
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZemerAlhanYakk-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
