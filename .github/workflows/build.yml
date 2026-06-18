@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -16,42 +17,24 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Android SDK
-        run: |
-          sudo apt-get install -y wget unzip
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          mv cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
-          export ANDROID_HOME=$HOME/android-sdk
-          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Download MP3s
         run: |
           mkdir -p app/src/main/res/raw
-          cd app/src/main/res/raw
           BASE="https://github.com/ObaidBaloch79/Zemer_AlhanYakk/releases/download/songs"
           for i in 1 2 3 4 5 6 7 8; do
-            curl -L "${BASE}/song${i}.mp3" -o "song${i}.mp3"
+            curl -L "${BASE}/song${i}.mp3" -o "app/src/main/res/raw/song${i}.mp3"
           done
 
-      - name: Setup Gradle Wrapper
+      - name: Generate Gradle Wrapper
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
-          unzip -q gradle-8.2-bin.zip
-          export PATH=$PATH:$PWD/gradle-8.2/bin
-          gradle wrapper
+          gradle wrapper --gradle-version 8.2
           chmod +x gradlew
 
-      - name: Build APK
-        env:
-          ANDROID_HOME: /root/android-sdk
-        run: |
-          export PATH=$PATH:$PWD/gradle-8.2/bin
-          chmod +x gradlew
-          ./gradlew assembleDebug
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
 
       - uses: actions/upload-artifact@v4.6.2
         with:
